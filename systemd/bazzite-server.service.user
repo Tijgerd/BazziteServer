@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=%h/bazzite-server
-ExecStart=%h/bazzite/bazzite-server/venv/bin/uvicorn bazzite_server:app --host 0.0.0.0 --port 5000
+ExecStart=%h/bazzite-server/venv/bin/uvicorn bazzite_server:app --host 0.0.0.0 --port 5000
 Restart=always
 
 [Install]
