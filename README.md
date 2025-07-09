@@ -16,7 +16,7 @@ It provides:
 On your Bazzite PC:
 
 ```bash
-git clone https://github.com/yourusername/bazzite-server.git
+git clone https://github.com/Tijgerd/bazzite-server.git
 cd bazzite-server
 chmod +x install.sh
 ./install.sh
