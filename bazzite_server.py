@@ -10,16 +10,37 @@ last_cpu_temp = None
 app = FastAPI()
 websocket_connections: List[WebSocket] = []
 
-games = ["retroarch", "dolphin", "yuzu", "pcsx2", "steam"]
-
 def detect_running_game():
     try:
-        output = subprocess.check_output(["ps", "-eo", "comm"], text=True)
-        for game in games:
-            if game in output:
-                return game
+        # Get all processes
+        for proc in psutil.process_iter(['name', 'pid']):
+            if proc.info['name'] == 'steam':
+                steam_pid = proc.info['pid']
+                break
+        else:
+            steam_pid = None
+
+        # If Steam is running, check its children
+        if steam_pid:
+            steam_proc = psutil.Process(steam_pid)
+            children = steam_proc.children(recursive=True)
+            for child in children:
+                name = child.name().lower()
+                if name not in ["steamwebhelper", "steam"]:
+                    return name
+
+            # Fallback if only Steam is found
+            return "steam"
+
+        # Otherwise check for known emulators
+        for proc in psutil.process_iter(['name']):
+            name = proc.info['name'].lower()
+            if name in ["retroarch", "dolphin", "yuzu", "pcsx2"]:
+                return name
+
     except Exception as e:
         print(e)
+
     return "idle"
 
 def get_cpu_temperature():
