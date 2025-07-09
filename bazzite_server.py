@@ -4,6 +4,7 @@ import subprocess
 import asyncio
 from typing import List
 import psutil
+import requests
 
 last_status = None
 last_cpu_temp = None
