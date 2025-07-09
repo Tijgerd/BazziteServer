@@ -10,7 +10,37 @@ last_cpu_temp = None
 app = FastAPI()
 websocket_connections: List[WebSocket] = []
 
-def detect_running_game():
+def detect_steam_game_via_local_api():
+    try:
+        resp = requests.get('http://localhost:27060/clients/status.json', timeout=1)
+        data = resp.json()
+        players = data.get('players', [])
+        if players:
+            gameid = players[0].get('gameid')
+            if gameid and gameid != "0":
+                return gameid
+    except Exception as e:
+        print(f"Error querying Steam local API: {e}")
+    return None
+
+def get_app_name_from_steam_api(appid):
+    if appid in appid_cache:
+        return appid_cache[appid]
+    try:
+        url = f"https://store.steampowered.com/api/appdetails?appids={appid}"
+        resp = requests.get(url, timeout=2)
+        data = resp.json()
+        app_data = data.get(str(appid), {})
+        if app_data.get('success') and 'data' in app_data:
+            name = app_data['data'].get('name')
+            if name:
+                appid_cache[appid] = name
+                return name
+    except Exception as e:
+        print(f"Error querying Steam Web API: {e}")
+    return f"SteamApp {appid}"
+
+def detect_running_game_process():
     try:
         # Get all processes
         for proc in psutil.process_iter(['name', 'pid']):
@@ -42,6 +72,16 @@ def detect_running_game():
         print(e)
 
     return "idle"
+
+def detect_running_game():
+    # First try Steam local API
+    appid = detect_steam_game_via_local_api()
+    if appid:
+        name = get_app_name_from_steam_api(appid)
+        return name
+
+    # Fallback
+    return detect_running_game_process()
 
 def get_cpu_temperature():
     try:
